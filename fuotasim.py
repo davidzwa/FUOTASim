@@ -147,58 +147,7 @@ def TransRange(rssi, dist):
         gamma = 0.8
         sd = 3.34
     return (d0*(10**((rssi-Lpld0)/(10.0*gamma))))
-###########################################################
-# check for collisions at base station
-# Note: called before a packet (or rather node) is inserted into the list
-############################################################
-def checkcollision(packet):
-    col = 0 # flag needed since there might be several collisions for packet
-    processing = 0
-    for i in range(0,len(packetsAtBS)):
-        if packetsAtBS[i].packet.processed == 1:
-            processing = processing + 1
-    if (processing > maxBSReceives):
-        print("too long:", len(packetsAtBS))
-        packet.processed = 0
-    else:
-        packet.processed = 1
 
-    if packetsAtBS:
-        print("CHECK node {} (sf:{} bw:{} freq:{:.6e}) others: {}".format(
-             packet.nodeid, SpreadFactors[packet.dr], Bandwidths[packet.dr], packet.freq,
-             len(packetsAtBS)))
-        for other in packetsAtBS:
-            if other.nodeid != packet.nodeid:
-               print(">> node {} (sf:{} bw:{} freq:{:.6e})".format(
-                   other.nodeid, SpreadFactors[other.packet.dr], Bandwidths[other.packet.dr], other.packet.freq))
-               if(full_collision == 1 or full_collision == 2):
-                   if frequencyCollision(packet, other.packet) \
-                   and timingCollision(packet, other.packet):
-                       # check who collides in the power domain
-                       if (full_collision == 1):
-                          # Capture effect
-                          c = powerCollision_1(packet, other.packet)
-                       else:
-                          # Capture + Non-orthognalitiy SFs effects
-                          c = powerCollision_2(packet, other.packet)
-                       # mark all the collided packets
-                       # either this one, the other one, or both
-                       for p in c:
-                          p.collided = 1
-                          if p == packet:
-                             col = 1
-                   else:
-                       # no freq or timing collision, all fine
-                       pass
-               else:
-                   # simple collision
-                   if frequencyCollision(packet, other.packet) \
-                   and sfCollision(packet, other.packet):
-                       packet.collided = 1
-                       other.packet.collided = 1  # other also got lost, if it wasn't lost already
-                       col = 1
-        return col
-    return 0
 ####################################################################
 # frequencyCollision, conditions
 #        |f1-f2| <= 120 kHz if f1 or f2 has bw 500
@@ -444,7 +393,6 @@ class nodeParameters():
         Lpl = np.mean(Lpls)
         print("Lpl:", Lpl)
         Prx = self.txpow - Lpl
-        minairtime = 9999
         maxdr = 0
         print("Prx:", Prx)
         for i in DataRates:  # DRs [0,1,2,3,4,5] BW=125KHz

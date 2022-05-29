@@ -477,7 +477,6 @@ class nodeParameters():
         Lpl = np.mean(Lpls)
         print("Lpl:", Lpl)
         Prx = self.txpow - Lpl
-        minairtime = 9999
         maxdr = 0
         print("Prx:", Prx)
         for i in DataRates:  # DRs [0,1,2,3,4,5] BW=125KHz
